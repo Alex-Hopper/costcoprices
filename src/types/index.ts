@@ -5,27 +5,20 @@ export type Country = {
   is_active: boolean;
 };
 
-export type Region = {
-  id: string;
-  country_code: string;
-  code: string; // 'BC', 'ON'
-  name: string; // 'British Columbia'
-};
-
 export type Warehouse = {
-  id: string;
-  costco_warehouse_id: string | null;
-  name: string;
-  address: string | null;
-  city: string;
-  region_id: string;
-  country_code: string;
-  latitude: number;
-  longitude: number;
-  is_business_center: boolean;
-  is_active: boolean;
-  region?: Region;
-};
+  id: string
+  costco_warehouse_id: string | null
+  name: string
+  address: string | null
+  city: string
+  province_code: string      // 'BC', 'ON'
+  costco_region_code: string // 'WC', 'EC'
+  country_code: string
+  latitude: number
+  longitude: number
+  is_business_center: boolean
+  is_active: boolean
+}
 
 export type ItemImage = {
   id: string;
@@ -81,8 +74,6 @@ export type PriceWithContext = Price & {
   item: Item & {
     images: ItemImage[];
   };
-  warehouse: Warehouse & {
-    region: Region;
-  };
+  warehouse: Warehouse;
   distance_km?: number;
 };
