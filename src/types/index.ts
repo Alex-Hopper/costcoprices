@@ -71,9 +71,7 @@ export type ExtractedItem = {
 
 // Full context for browsing — what gets shown to users
 export type PriceWithContext = Price & {
-  item: Item & {
-    images: ItemImage[];
-  };
+  item: Item;
   warehouse: Warehouse;
   distance_km?: number;
 };
