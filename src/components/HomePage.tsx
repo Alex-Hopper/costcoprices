@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
+import { slugifyQuery } from "@/lib/search";
+import Banner from "@/components/Banner";
+import Navbar from "@/components/Navbar";
 
 // Floating product images around the hero
 // Replace PlaceholderBox with <Image src={src} .../> when you have real images
@@ -39,11 +41,9 @@ export default function HomePage() {
   const router = useRouter();
 
   const handleSearch = () => {
-    if (query.trim()) {
-      router.push(`/browse?q=${encodeURIComponent(query.trim())}`);
-    } else {
-      router.push("/browse");
-    }
+    const slug = slugifyQuery(query);
+    if (!slug) return;
+    router.push(`/search/${slug}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -53,44 +53,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-home-page">
 
-      {/* Banner */}
-      <div className="flex items-center justify-center gap-4 px-6 py-2.5 text-sm border-b bg-home-banner border-cream-border text-ink-muted">
-        <span>Prices submitted by real Costco Canada members.</span>
-        <Button
-          variant="outline"
-          size="lg"
-          className="rounded-full bg-transparent border-ink-muted text-ink-muted hover:bg-cream-border"
-          onClick={() => inputRef.current?.focus()}
-        >
-          Submit a receipt
-        </Button>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-4 bg-home-nav">
-        <div className="text-[17px] border border-ink rounded-full px-4 py-1.5 tracking-tight font-serif text-ink">
-          Costco<em>Price</em>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/browse">
-            <Button
-              variant="outline"
-              size="lg"
-              className="bg-transparent border-ink text-ink hover:bg-home-nav-hover"
-            >
-              Browse items
-            </Button>
-          </Link>
-          <Link href="/submit">
-            <Button
-              size="lg"
-              className="bg-ink text-cream hover:opacity-90"
-            >
-              + Submit price
-            </Button>
-          </Link>
-        </div>
-      </nav>
+      <Banner onSubmitReceipt={() => inputRef.current?.focus()} />
+      <Navbar />
 
       {/* Hero */}
       <section className="relative flex flex-col items-center text-center px-6 pt-6 pb-24 overflow-hidden min-h-[520px]">
