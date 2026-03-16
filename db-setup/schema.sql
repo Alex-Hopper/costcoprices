@@ -33,6 +33,9 @@ create table items (
   is_weighted     boolean default false,
   unit_size       text,
   costco_url      text,
+  current_price decimal(10,2),
+  current_price_type text,
+  last_price_updated_at timestamptz;
   created_at      timestamptz default now(),
   last_seen_at    timestamptz default now()
 );
