@@ -1,3 +1,7 @@
+@config "../../tailwind.config.ts";
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@400;500&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -126,4 +130,19 @@
   html {
     @apply font-sans;
   }
+}
+
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-dm: 'DM Sans', system-ui, sans-serif;
+}
+ 
+body {
+  background-color: #F5F4EB;
+  font-family: var(--font-dm);
+  -webkit-font-smoothing: antialiased;
+}
+ 
+html {
+  scroll-behavior: smooth;
 }
