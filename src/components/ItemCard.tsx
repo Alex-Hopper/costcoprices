@@ -9,8 +9,8 @@ type ItemCardProps = {
 
 export default function ItemCard({ item }: ItemCardProps) {
   return (
-    <article className="rounded-xl border border-cream-border bg-white/80 p-4 shadow-sm">
-      <div className="relative h-36 w-full overflow-hidden rounded-lg bg-cream/70">
+    <article className="p-2">
+      <div className="relative h-36 w-full overflow-hidden rounded-lg">
         <Image
           src={item.image}
           alt={item.name}

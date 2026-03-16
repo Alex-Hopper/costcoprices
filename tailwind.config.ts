@@ -1,13 +1,20 @@
 import type { Config } from "tailwindcss";
 
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
+    screens: {
+      "xs": "475px",
+      ...defaultTheme.screens,
+    },
     extend: {
       colors: {
         home: {
           page: "#F5F4EB",
           banner: "#E0DDD0",
+          nav: "#F5F4EB",
           "nav-hover": "#D6D2C3",
           search: "#464644",
           "search-button": "#2A2A28",
