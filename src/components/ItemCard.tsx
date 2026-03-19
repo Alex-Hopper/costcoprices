@@ -8,12 +8,6 @@ type ItemCardProps = {
   onClick?: () => void;
 };
 
-function priceLabel(item: SearchResultItem) {
-  return item.priceType === "per_kg"
-    ? `$${item.price.toFixed(2)} / kg`
-    : `$${item.price.toFixed(2)}`;
-}
-
 export default function ItemCard({ item, onClick }: ItemCardProps) {
   return (
     <button
@@ -30,7 +24,7 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
           className="object-contain p-3"
         />
       </div>
-      <p className="mt-3 text-xl font-semibold text-ink">{priceLabel(item)}</p>
+      <p className="mt-3 text-xl font-semibold text-ink">{item.price.toFixed(2)} {item.priceType === "per_kg" ? <span className="text-ink-muted">/ kg</span> : <></>}</p>
       <h2 className="mt-1 text-sm font-normal text-ink-muted">{item.name}</h2>
     </button>
   );
