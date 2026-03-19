@@ -5,10 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { queryFromSlug, searchItemsBySlug, slugifyQuery } from "@/lib/search";
+import {
+  queryFromSlug,
+  searchItemsBySlug,
+  slugifyQuery,
+  type SearchResultItem,
+} from "@/lib/search";
 import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
 import ItemCard from "@/components/ItemCard";
+import ItemDetailsDialog from "@/components/ItemDetailsDialog";
 
 export default function SearchResultsPage() {
   const router = useRouter();
@@ -16,6 +22,8 @@ export default function SearchResultsPage() {
   const slug = params.slug ?? "";
   const initialQuery = useMemo(() => queryFromSlug(slug), [slug]);
   const [query, setQuery] = useState(initialQuery);
+  const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const results = useMemo(() => searchItemsBySlug(slug), [slug]);
 
   useEffect(() => {
@@ -27,6 +35,11 @@ export default function SearchResultsPage() {
     const nextSlug = slugifyQuery(query);
     if (!nextSlug) return;
     router.push(`/search/${nextSlug}`);
+  };
+
+  const onItemClick = (item: SearchResultItem) => {
+    setSelectedItem(item);
+    setDetailsOpen(true);
   };
 
   return (
@@ -66,11 +79,23 @@ export default function SearchResultsPage() {
         ) : (
           <div className="mt-6 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {results.map((item) => <ItemCard key={item.id} item={item} />)}
+              {results.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => onItemClick(item)}
+                />
+              ))}
             </div>
           </div>
         )}
       </div>
+
+      <ItemDetailsDialog
+        item={selectedItem}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+      />
     </main>
   );
 }

@@ -5,11 +5,22 @@ import type { SearchResultItem } from "@/lib/search";
 
 type ItemCardProps = {
   item: SearchResultItem;
+  onClick?: () => void;
 };
 
-export default function ItemCard({ item }: ItemCardProps) {
+function priceLabel(item: SearchResultItem) {
+  return item.priceType === "per_kg"
+    ? `$${item.price.toFixed(2)} / kg`
+    : `$${item.price.toFixed(2)}`;
+}
+
+export default function ItemCard({ item, onClick }: ItemCardProps) {
   return (
-    <article className="p-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-lg p-2 text-left transition-colors hover:bg-white/55"
+    >
       <div className="relative h-36 w-full overflow-hidden rounded-lg">
         <Image
           src={item.image}
@@ -19,8 +30,8 @@ export default function ItemCard({ item }: ItemCardProps) {
           className="object-contain p-3"
         />
       </div>
-      <p className="mt-3 text-xl font-semibold text-ink">${item.price.toFixed(2)}</p>
+      <p className="mt-3 text-xl font-semibold text-ink">{priceLabel(item)}</p>
       <h2 className="mt-1 text-sm font-normal text-ink-muted">{item.name}</h2>
-    </article>
+    </button>
   );
 }
