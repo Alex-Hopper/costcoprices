@@ -15,6 +15,7 @@ import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
 import ItemCard from "@/components/ItemCard";
 import ItemDetailsDialog from "@/components/ItemDetailsDialog";
+import RegionIndicator from "@/components/RegionIndicator";
 
 export default function SearchResultsPage() {
   const router = useRouter();
@@ -74,10 +75,12 @@ export default function SearchResultsPage() {
           Results for &quot;{queryFromSlug(slug)}&quot;
         </h1>
 
+        <RegionIndicator />
+
         {results.length === 0 ? (
           <p className="mt-4 text-ink-muted">No results found. Try another search.</p>
         ) : (
-          <div className="mt-6 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {results.map((item) => (
                 <ItemCard

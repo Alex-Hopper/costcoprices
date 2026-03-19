@@ -9,6 +9,7 @@ import Image from "next/image";
 import { slugifyQuery } from "@/lib/search";
 import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
+import RegionIndicator from "@/components/RegionIndicator";
 
 // Floating product images around the hero
 // Replace PlaceholderBox with <Image src={src} .../> when you have real images
@@ -97,15 +98,7 @@ export default function HomePage() {
           </Button>
         </div>
 
-        {/* Location pill */}
-        <div className="relative z-10 mt-3 flex items-center gap-2 text-xs text-ink-muted">
-          <div className="h-1.5 w-1.5 rounded-full bg-green-600"></div>
-          Western Canada
-          <span className="text-ink-ghost">·</span>
-          <button className="underline underline-offset-2 text-ink hover:opacity-70 transition-opacity">
-            change
-          </button>
-        </div>
+        <RegionIndicator />
       </section>
     </div>
   );

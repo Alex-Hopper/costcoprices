@@ -14,7 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SearchResultItem } from "@/lib/search";
+import { useRegion } from "@/contexts/RegionContext";
 
 type ItemDetailsDialogProps = {
   item: SearchResultItem | null;
@@ -33,6 +35,7 @@ export default function ItemDetailsDialog({
   open,
   onOpenChange,
 }: ItemDetailsDialogProps) {
+  const { region, regionLabel, setRegion } = useRegion();
   const [imageIndex, setImageIndex] = useState(0);
   const [reportOpen, setReportOpen] = useState(false);
   const [newPrice, setNewPrice] = useState("");
@@ -141,15 +144,32 @@ export default function ItemDetailsDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-4 rounded-lg border border-cream-border bg-white/70 p-4">
-            <p className="text-sm text-ink-muted">Current region</p>
-            <div className="mt-1 flex items-center justify-between">
-              <p className="text-base font-medium text-ink">Western Canada</p>
-              <Button variant="outline" size="sm" className="bg-white">
-                Change
-              </Button>
-            </div>
-          </div>
+          <ToggleGroup
+            value={[region]}
+            onValueChange={(value) => {
+              const nextRegion = value[0];
+              if (nextRegion === "WC" || nextRegion === "EC") {
+                setRegion(nextRegion);
+              }
+            }}
+            variant="outline"
+            size="lg"
+            spacing={0.1}
+            className="mt-4 w-full border"
+          >
+            <ToggleGroupItem
+              value="WC"
+              className="h-11 flex-1 rounded-r-none border border-transparent text-base data-[pressed]:border-home-search-button"
+            >
+              Western Canada
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="EC"
+              className="h-11 flex-1 rounded-l-none border border-transparent text-base data-[pressed]:border-home-search-button"
+            >
+              Eastern Canada
+            </ToggleGroupItem>
+          </ToggleGroup>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm text-ink-muted">
