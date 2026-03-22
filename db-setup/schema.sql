@@ -33,9 +33,6 @@ create table items (
   is_weighted     boolean default false,
   unit_size       text,
   costco_url      text,
-  current_price decimal(10,2),
-  current_price_type text,
-  last_price_updated_at timestamptz;
   created_at      timestamptz default now(),
   last_seen_at    timestamptz default now()
 );
@@ -62,4 +59,13 @@ create table prices (
   session_token    text not null,
   notes            text,
   submitted_at     timestamptz default now()
+);
+
+create table item_region_prices (
+  item_number        text references items(item_number),
+  costco_region_code text not null,  -- 'WC', 'EC', 'CB'
+  current_price      decimal(10,2) not null,
+  current_price_type text not null,
+  last_updated_at    timestamptz default now(),
+  primary key (item_number, costco_region_code)
 );
