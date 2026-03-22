@@ -4,6 +4,7 @@ alter table warehouses enable row level security;
 alter table items enable row level security;
 alter table item_images enable row level security;
 alter table prices enable row level security;
+alter table item_region_prices enable row level security;
 
 
 -- ── Countries ────────────────────────────────────────────────────────────────
@@ -48,3 +49,7 @@ with check (
   and session_token is not null
   and session_token != ''
 );
+
+
+create policy "current_prices: public read"
+on item_region_prices for select to anon using (true);
