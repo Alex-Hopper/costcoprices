@@ -144,32 +144,12 @@ export default function ItemDetailsDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <ToggleGroup
-            value={[region]}
-            onValueChange={(value) => {
-              const nextRegion = value[0];
-              if (nextRegion === "WC" || nextRegion === "EC") {
-                setRegion(nextRegion);
-              }
-            }}
-            variant="outline"
-            size="lg"
-            spacing={0.1}
-            className="mt-4 w-full border"
-          >
-            <ToggleGroupItem
-              value="WC"
-              className="h-11 flex-1 rounded-r-none border border-transparent text-base data-[pressed]:border-home-search-button"
-            >
-              Western Canada
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="EC"
-              className="h-11 flex-1 rounded-l-none border border-transparent text-base data-[pressed]:border-home-search-button"
-            >
-              Eastern Canada
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <div className="mt-4 rounded-lg border border-cream-border bg-white/70 p-4">
+            <div className="mb-1 flex items-center justify-between">
+              <p className="text-base font-medium text-ink">Western Canada</p>
+            </div>
+            <p className="text-sm text-ink-muted">If this is not your region please check the price for your region.</p>
+          </div>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm text-ink-muted">
