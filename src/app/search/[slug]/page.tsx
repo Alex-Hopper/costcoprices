@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import {
   queryFromSlug,
@@ -11,6 +12,8 @@ import {
   slugifyQuery,
   type SearchResultItem,
 } from "@/lib/search";
+import { createClient } from "@/lib/supabase/client";
+import { useRegion } from "@/contexts/RegionContext";
 import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
 import ItemCard from "@/components/ItemCard";
@@ -21,15 +24,48 @@ export default function SearchResultsPage() {
   const router = useRouter();
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? "";
+  const { region } = useRegion();
   const initialQuery = useMemo(() => queryFromSlug(slug), [slug]);
   const [query, setQuery] = useState(initialQuery);
   const [selectedItem, setSelectedItem] = useState<SearchResultItem | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const results = useMemo(() => searchItemsBySlug(slug), [slug]);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery]);
+
+  useEffect(() => {
+    let canceled = false;
+    const supabase = createClient();
+
+    const run = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const data = await searchItemsBySlug(supabase, slug, region);
+        if (!canceled) {
+          setResults(data);
+        }
+      } catch (error) {
+        if (!canceled) {
+          setResults([]);
+          setLoadError("Could not load search results right now.");
+        }
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    run();
+    return () => {
+      canceled = true;
+    };
+  }, [slug, region]);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -42,6 +78,8 @@ export default function SearchResultsPage() {
     setSelectedItem(item);
     setDetailsOpen(true);
   };
+
+  const loadingSkeletons = Array.from({ length: 10 }, (_, index) => index);
 
   return (
     <main className="min-h-screen bg-home-page">
@@ -77,8 +115,26 @@ export default function SearchResultsPage() {
 
         <RegionIndicator />
 
-        {results.length === 0 ? (
-          <p className="mt-4 text-ink-muted">No results found. Try another search.</p>
+        {loading ? (
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+            <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {loadingSkeletons.map((skeleton) => (
+                <div key={skeleton} className="p-2">
+                  <Skeleton className="h-36 w-full rounded-lg" />
+                  <Skeleton className="mt-3 h-6 w-24" />
+                  <Skeleton className="mt-2 h-4 w-full" />
+                  <Skeleton className="mt-1 h-4 w-3/4" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : loadError ? (
+          <p className="mt-4 text-red-700">
+            Something wen't wrong, please try again. ({loadError})</p>
+        ) : results.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+            <p className="text-ink-muted text-center">No results found. Try another search.</p>
+          </div>
         ) : (
           <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
