@@ -4,9 +4,9 @@ import { getItemsByNumbers } from "@/lib/db/items";
 import { queueScrapeJobs } from "@/lib/scraper/queue";
 import { scrapeCostcoItem } from "@/lib/scraper/costco";
 import type {
-  RawExtractedReceiptItem,
+  ExtractedReceipt,
   ResolveItemsResult,
-  ResolvedReceiptItem,
+  ResolvedReceipt,
 } from "@/lib/receipt/types";
 
 type SupabaseLike = {
@@ -15,9 +15,10 @@ type SupabaseLike = {
 
 export async function resolveItems(
   supabase: SupabaseLike,
-  items: RawExtractedReceiptItem[]
+  receipts: ExtractedReceipt[]
 ): Promise<ResolveItemsResult> {
-  const uniqueItemNumbers = [...new Set(items.map((item) => item.itemNumber).filter(Boolean))];
+  const allItems = receipts.flatMap((receipt) => receipt.items);
+  const uniqueItemNumbers = [...new Set(allItems.map((item) => item.itemNumber).filter(Boolean))];
   const existing = await getItemsByNumbers(supabase, uniqueItemNumbers);
 
   const initiallyMissing = uniqueItemNumbers.filter((itemNumber) => !existing.has(itemNumber));
@@ -30,14 +31,23 @@ export async function resolveItems(
   const refreshed = await getItemsByNumbers(supabase, uniqueItemNumbers);
   const unresolvedItemNumbers = uniqueItemNumbers.filter((itemNumber) => !refreshed.has(itemNumber));
 
-  const resolvedItems: ResolvedReceiptItem[] = items.map((item) => {
-    const resolved = refreshed.get(item.itemNumber);
-    return {
-      ...item,
-      existsInCatalog: Boolean(resolved),
-      canonicalName: resolved?.canonical_name ?? null,
-    };
-  });
+  const resolvedReceipts: ResolvedReceipt[] = receipts.map((receipt) => ({
+    receiptIndex: receipt.receiptIndex,
+    warehouseId: receipt.warehouseId,
+    purchaseDate: receipt.purchaseDate,
+    items: receipt.items.map((item) => {
+      const resolved = refreshed.get(item.itemNumber);
+      return {
+        ...item,
+        existsInCatalog: Boolean(resolved),
+        canonicalName: resolved?.canonical_name ?? null,
+      };
+    }),
+  }));
 
-  return { items: resolvedItems, unresolvedItemNumbers };
+  return {
+    receipts: resolvedReceipts,
+    items: resolvedReceipts.flatMap((receipt) => receipt.items),
+    unresolvedItemNumbers,
+  };
 }

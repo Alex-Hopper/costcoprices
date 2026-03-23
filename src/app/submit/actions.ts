@@ -3,22 +3,25 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { extractReceiptInfo } from "@/lib/receipt/extract";
-import { sanitizeExtractedReceiptInfo, hasExtractedItems } from "@/lib/receipt/validate";
+import { hasExtractedItems, sanitizeExtractedReceiptInfo } from "@/lib/receipt/validate";
 import { resolveItems } from "@/lib/receipt/resolve";
 import {
   getClosestWarehouseFromIp,
   insertPrices,
   warehouseExists,
 } from "@/lib/db/prices";
-import type { ReceiptSubmissionResult } from "@/lib/receipt/types";
+import type {
+  ExtractedReceipt,
+  ReceiptSubmissionResult,
+  ResolvedReceipt,
+} from "@/lib/receipt/types";
 
 export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissionResult> {
   if (!images?.length) {
     return {
       success: false,
+      receipts: [],
       items: [],
-      warehouseId: null,
-      purchaseDate: null,
       message: "No images were provided.",
     };
   }
@@ -31,9 +34,8 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
   } catch (error) {
     return {
       success: false,
+      receipts: [],
       items: [],
-      warehouseId: null,
-      purchaseDate: null,
       message:
         error instanceof Error
           ? error.message
@@ -46,10 +48,9 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
   if (!hasExtractedItems(sanitized)) {
     return {
       success: false,
+      receipts: sanitized.receipts.map(toEmptyResolvedReceipt),
       items: [],
-      warehouseId: sanitized.warehouseId,
-      purchaseDate: sanitized.purchaseDate,
-      message: "No items were extracted from this receipt.",
+      message: "No items were extracted from the submitted receipts.",
     };
   }
 
@@ -59,39 +60,62 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
     headerStore.get("x-real-ip") ??
     null;
 
-  const extractedWarehouseValid = await warehouseExists(supabase, sanitized.warehouseId);
-  const warehouseId = extractedWarehouseValid
-    ? sanitized.warehouseId
-    : await getClosestWarehouseFromIp(supabase, userIp);
+  const fallbackWarehouseId = await getClosestWarehouseFromIp(supabase, userIp);
+  const finalizedReceipts = await applyReceiptFallbacks(
+    supabase,
+    sanitized.receipts,
+    fallbackWarehouseId
+  );
 
-  if (!warehouseId) {
+  if (finalizedReceipts.some((receipt) => !receipt.warehouseId)) {
     return {
       success: false,
+      receipts: finalizedReceipts.map(toEmptyResolvedReceipt),
       items: [],
-      warehouseId: null,
-      purchaseDate: null,
-      message: "Could not resolve a warehouse for this submission.",
+      message: "Could not resolve a warehouse for one or more receipts.",
     };
   }
 
-  const purchaseDate = sanitized.purchaseDate ?? new Date().toISOString();
-  const resolved = await resolveItems(supabase, sanitized.items);
+  const resolved = await resolveItems(supabase, finalizedReceipts);
 
   await insertPrices(supabase, {
-    items: resolved.items,
-    warehouseId,
-    purchaseDate,
+    receipts: resolved.receipts,
     sessionToken: crypto.randomUUID(),
   });
 
   return {
     success: true,
+    receipts: resolved.receipts,
     items: resolved.items,
-    warehouseId,
-    purchaseDate,
     message:
       resolved.unresolvedItemNumbers.length > 0
         ? `Submitted with ${resolved.unresolvedItemNumbers.length} unresolved item(s).`
         : "Submission processed successfully.",
+  };
+}
+
+async function applyReceiptFallbacks(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  receipts: ExtractedReceipt[],
+  fallbackWarehouseId: string | null
+): Promise<ExtractedReceipt[]> {
+  return Promise.all(
+    receipts.map(async (receipt) => {
+      const extractedWarehouseValid = await warehouseExists(supabase, receipt.warehouseId);
+      return {
+        ...receipt,
+        warehouseId: extractedWarehouseValid ? receipt.warehouseId : fallbackWarehouseId,
+        purchaseDate: receipt.purchaseDate ?? new Date().toISOString(),
+      };
+    })
+  );
+}
+
+function toEmptyResolvedReceipt(receipt: ExtractedReceipt): ResolvedReceipt {
+  return {
+    receiptIndex: receipt.receiptIndex,
+    warehouseId: receipt.warehouseId,
+    purchaseDate: receipt.purchaseDate,
+    items: [],
   };
 }
