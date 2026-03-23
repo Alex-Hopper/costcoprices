@@ -28,17 +28,51 @@ export async function resolveWarehouseId(
 
 export async function getClosestWarehouseFromIp(
   supabase: SupabaseLike,
-  _ipAddress: string | null
+  ipAddress: string | null
 ): Promise<string | null> {
-  // Placeholder fallback until IP geolocation is added.
+  const geo = ipAddress ? await lookupGeoFromIp(ipAddress) : null;
   const { data, error } = await supabase
     .from("warehouses")
-    .select("id")
+    .select("costco_warehouse_id, latitude, longitude")
     .eq("is_active", true)
-    .limit(1);
+    .not("costco_warehouse_id", "is", null);
 
   if (error) throw error;
-  return data?.[0]?.id ?? null;
+  if (!data?.length) return null;
+
+  if (!geo?.ll || geo.ll.length !== 2) {
+    return data[0]?.costco_warehouse_id ?? null;
+  }
+
+  const [userLatitude, userLongitude] = geo.ll;
+  console.log(userLatitude, userLongitude);
+  let closestWarehouse = data[0]?.costco_warehouse_id ?? null;
+  let closestDistance = Number.POSITIVE_INFINITY;
+
+  for (const warehouse of data) {
+    const latitude = Number(warehouse.latitude);
+    const longitude = Number(warehouse.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+
+    const distance =
+      Math.pow(latitude - userLatitude, 2) + Math.pow(longitude - userLongitude, 2);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestWarehouse = warehouse.costco_warehouse_id;
+    }
+  }
+
+  return closestWarehouse;
+}
+
+async function lookupGeoFromIp(ipAddress: string) {
+  try {
+    const geoip = await import("geoip-lite");
+    return geoip.default.lookup(ipAddress);
+  } catch {
+    return null;
+  }
 }
 
 export async function insertPrices(

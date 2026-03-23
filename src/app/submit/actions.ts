@@ -60,11 +60,12 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
     headerStore.get("x-real-ip") ??
     null;
 
-  const fallbackWarehouseId = await getClosestWarehouseFromIp(supabase, userIp);
+  const fallbackWarehouseRef = await getClosestWarehouseFromIp(supabase, userIp);
+  console.log("FALLBACK WHID", fallbackWarehouseRef, userIp);
   const finalizedReceipts = await applyReceiptFallbacks(
     supabase,
     sanitized.receipts,
-    fallbackWarehouseId
+    fallbackWarehouseRef
   );
 
   if (finalizedReceipts.some((receipt) => !receipt.warehouseId)) {
@@ -97,14 +98,16 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
 async function applyReceiptFallbacks(
   supabase: Awaited<ReturnType<typeof createClient>>,
   receipts: ExtractedReceipt[],
-  fallbackWarehouseId: string | null
+  fallbackWarehouseRef: string | null
 ): Promise<ExtractedReceipt[]> {
+  const resolvedFallbackWarehouseId = await resolveWarehouseId(supabase, fallbackWarehouseRef);
+
   return Promise.all(
     receipts.map(async (receipt) => {
       const resolvedWarehouseId = await resolveWarehouseId(supabase, receipt.warehouseId);
       return {
         ...receipt,
-        warehouseId: resolvedWarehouseId ?? fallbackWarehouseId,
+        warehouseId: resolvedWarehouseId ?? resolvedFallbackWarehouseId,
         purchaseDate: receipt.purchaseDate ?? new Date().toISOString(),
       };
     })

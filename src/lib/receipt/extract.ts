@@ -58,12 +58,13 @@ function parseJsonFromModelText(rawText: string): ClaudeExtractedReceipt[] {
 }
 
 export async function extractReceiptInfo(images: File[]): Promise<ExtractedReceiptInfo> {
-  const rawText = await callAnthropicVisionJson({
-    prompt: RECEIPT_EXTRACTION_PROMPT,
-    images,
-  });
-  const receipts = parseJsonFromModelText(rawText);
-
+  // const rawText = await callAnthropicVisionJson({
+  //   prompt: RECEIPT_EXTRACTION_PROMPT,
+  //   images,
+  // });
+  // const receipts = parseJsonFromModelText(rawText);
+  const receipts = parseJsonFromModelText(`{"receipts":[{"warehouse_id":"552","date":"2026/03/16","items":[{"item_number":"30669","name":"BANANAS","price":1.99,"price_type":"fixed","unit_price":null,"is_sale":false},{"item_number":"24048","name":"BF CHKN STR","price":24.99,"price_type":"fixed","unit_price":null,"is_sale":false},{"item_number":"3383845","name":"SWEET FRIES","price":12.49,"price_type":"fixed","unit_price":null,"is_sale":false},{"item_number":"1832385","name":"LF CREATINE","price":35.99,"price_type":"fixed","unit_price":null,"is_sale":true},{"item_number":"1694711","name":"LEANFIT CHOC","price":59.99,"price_type":"fixed","unit_price":null,"is_sale":true},{"item_number":"21927","name":"LEAN GR BEEF","price":32.19,"price_type":"fixed","unit_price":null,"is_sale":false},{"item_number":"8888331","name":"ALANI NU","price":29.99,"price_type":"fixed","unit_price":null,"is_sale":true},{"item_number":"2031131","name":"TPD/8888331","price":-6.00,"price_type":"fixed","unit_price":null,"is_sale":false},{"item_number":"","name":"DEPOSIT CL","price":1.80,"price_type":"fixed","unit_price":null,"is_sale":false}]}]}`);
+  // KEEP THIS PLACEHLDER TO SAVE ON API USAGE FOR NOW.
   return {
     receipts: receipts.map(mapReceipt),
   };
