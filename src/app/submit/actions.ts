@@ -8,7 +8,7 @@ import { resolveItems } from "@/lib/receipt/resolve";
 import {
   getClosestWarehouseFromIp,
   insertPrices,
-  warehouseExists,
+  resolveWarehouseId,
 } from "@/lib/db/prices";
 import type {
   ExtractedReceipt,
@@ -101,10 +101,10 @@ async function applyReceiptFallbacks(
 ): Promise<ExtractedReceipt[]> {
   return Promise.all(
     receipts.map(async (receipt) => {
-      const extractedWarehouseValid = await warehouseExists(supabase, receipt.warehouseId);
+      const resolvedWarehouseId = await resolveWarehouseId(supabase, receipt.warehouseId);
       return {
         ...receipt,
-        warehouseId: extractedWarehouseValid ? receipt.warehouseId : fallbackWarehouseId,
+        warehouseId: resolvedWarehouseId ?? fallbackWarehouseId,
         purchaseDate: receipt.purchaseDate ?? new Date().toISOString(),
       };
     })

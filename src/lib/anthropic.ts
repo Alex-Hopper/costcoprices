@@ -29,7 +29,7 @@ export async function callAnthropicVisionJson(params: {
     throw new Error("ANTHROPIC_API_KEY is missing.");
   }
 
-  const model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
+  const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6";
   const content: AnthropicMessageContent[] = [{ type: "text", text: params.prompt }];
 
   for (const image of params.images) {

@@ -6,20 +6,24 @@ type SupabaseLike = {
   from: (table: string) => any;
 };
 
-export async function warehouseExists(
-  supabase: SupabaseLike,
-  warehouseId: string | null
-): Promise<boolean> {
-  if (!warehouseId) return false;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export async function resolveWarehouseId(
+  supabase: SupabaseLike,
+  warehouseRef: string | null
+): Promise<string | null> {
+  if (!warehouseRef) return null;
+
+  const column = UUID_PATTERN.test(warehouseRef) ? "id" : "costco_warehouse_id";
   const { data, error } = await supabase
     .from("warehouses")
     .select("id")
-    .eq("id", warehouseId)
+    .eq(column, warehouseRef)
     .limit(1);
 
   if (error) throw error;
-  return Boolean(data?.length);
+  return data?.[0]?.id ?? null;
 }
 
 export async function getClosestWarehouseFromIp(

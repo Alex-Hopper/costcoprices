@@ -3,8 +3,9 @@ import "server-only";
 import { callAnthropicVisionJson } from "@/lib/anthropic";
 import type { ExtractedReceipt, ExtractedReceiptInfo } from "@/lib/receipt/types";
 
-const RECEIPT_EXTRACTION_PROMPT = `This is a Costco Canada receipt or multiple receipts. For each receipt extract warehouse id, the purchase data, every purchased item in an array of items and return ONLY a JSON array, of receipt info objects.
-Each object within the json array should correspond with exactly one of the receipts (so, if there is only one receipt, an array of size 1), within each of these objects:
+const RECEIPT_EXTRACTION_PROMPT = `This is a Costco Canada receipt or multiple receipts. For each receipt extract warehouse id, the purchase data, every purchased item in an array of items and return ONLY a JSON object with this shape:
+{"receipts":[...]}
+Each object within the receipts array should correspond with exactly one of the receipts (so, if there is only one receipt, an array of size 1), within each of these objects:
 The warehouse_id field should be a string, and consists of numbers.
 The date should be in a string in the format "YYYY/MM/DD".
 Each item object must have exactly these fields:
@@ -16,7 +17,7 @@ Each item object must have exactly these fields:
 - is_sale: true if there is an asterisk next to the item name, otherwise false
 
 Ignore tax lines, subtotals, totals, membership fees, and any non-item lines.
-Return nothing else. No markdown, no backticks, no explanation. Just the raw JSON array.`;
+Return nothing else. No markdown, no backticks, no explanation. Just the raw JSON object.`;
 
 type ClaudeExtractedItem = {
   item_number: string;
@@ -49,11 +50,11 @@ function parseJsonFromModelText(rawText: string): ClaudeExtractedReceipt[] {
     .trim();
 
   const parsed = JSON.parse(cleaned) as unknown;
-  if (!Array.isArray(parsed)) {
-    throw new Error("Claude response is not a JSON array.");
+  if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as { receipts?: unknown }).receipts)) {
+    throw new Error("Claude response is not a JSON object with a receipts array.");
   }
 
-  return parsed as ClaudeExtractedReceipt[];
+  return (parsed as { receipts: ClaudeExtractedReceipt[] }).receipts;
 }
 
 export async function extractReceiptInfo(images: File[]): Promise<ExtractedReceiptInfo> {
@@ -61,7 +62,6 @@ export async function extractReceiptInfo(images: File[]): Promise<ExtractedRecei
     prompt: RECEIPT_EXTRACTION_PROMPT,
     images,
   });
-
   const receipts = parseJsonFromModelText(rawText);
 
   return {

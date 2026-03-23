@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { receiptSubmission } from "@/app/submit/actions";
 import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -75,6 +77,7 @@ export default function SubmitPage() {
     setError(null);
     setIsSubmitting(false);
     setSubmitted(false);
+    setSuccessMessage(null);
   };
 
   const openGalleryPicker = () => galleryInputRef.current?.click();
@@ -90,11 +93,24 @@ export default function SubmitPage() {
     if (!receipts.length || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    setIsSubmitting(false);
+    setSuccessMessage("Your receipt was successfully submitted. It helps keep prices accurate for everyone.");
     setSubmitted(true);
+
+    void receiptSubmission(receipts.map((receipt) => receipt.file))
+      .then((result) => {
+        if (result.success) {
+          setSuccessMessage(result.message ?? null);
+          return;
+        }
+
+        console.error("Receipt submission failed after optimistic success:", result.message);
+      })
+      .catch((submissionError) => {
+        console.error("Receipt submission failed after optimistic success:", submissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   if (submitted) {
@@ -104,7 +120,10 @@ export default function SubmitPage() {
         <Navbar />
 
         <div className="mx-auto flex w-full max-w-3xl px-6 py-16">
-          <SubmitSuccessCard onSubmitAnother={resetFlow} />
+          <SubmitSuccessCard
+            onSubmitAnother={resetFlow}
+            message={successMessage ?? undefined}
+          />
         </div>
       </main>
     );
