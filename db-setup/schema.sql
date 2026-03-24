@@ -62,7 +62,7 @@ create table prices (
 );
 
 create table item_region_prices (
-  item_number        text references items(item_number),
+  item_number        text not null,
   costco_region_code text not null,  -- 'WC', 'EC', 'CB'
   current_price      decimal(10,2) not null,
   current_price_type text not null,
