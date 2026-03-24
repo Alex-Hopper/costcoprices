@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -57,8 +58,8 @@ export default function ItemDetailsDialog({
 
   if (!item) return null;
 
-  const images = item.images.length ? item.images : [item.image];
-  const currentImage = images[imageIndex] ?? images[0];
+  const images = item.images;
+  const currentImage = images[imageIndex] ?? null;
   const unitLabel = item.priceType === "per_kg" ? "per kg" : "each";
 
   return (
@@ -92,38 +93,47 @@ export default function ItemDetailsDialog({
 
           <div className="mt-5 space-y-3">
             <div className="relative h-72 w-full overflow-hidden rounded-lg border border-cream-border bg-white">
-              <Image
-                src={currentImage}
-                alt={item.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 80vw"
-                className="object-contain p-4"
-              />
+              {currentImage ? (
+                <Image
+                  src={currentImage}
+                  alt={item.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 80vw"
+                  className="object-contain p-4"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-ink-faint">
+                  <ImageOff className="h-10 w-10" />
+                  <span className="text-sm font-medium">No product image yet</span>
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {images.map((image, index) => (
-                <button
-                  key={`${item.id}-${index}`}
-                  type="button"
-                  onClick={() => setImageIndex(index)}
-                  className={`relative h-16 w-16 overflow-hidden rounded-md border-2 bg-white transition-colors ${
-                    index === imageIndex
-                      ? "border-home-search-button"
-                      : "border-cream-border hover:border-ink-faint"
-                  }`}
-                  aria-label={`View image ${index + 1}`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${item.name} preview ${index + 1}`}
-                    fill
-                    sizes="64px"
-                    className="object-contain p-1.5"
-                  />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 ? (
+              <div className="flex flex-wrap gap-2">
+                {images.map((image, index) => (
+                  <button
+                    key={`${item.id}-${index}`}
+                    type="button"
+                    onClick={() => setImageIndex(index)}
+                    className={`relative h-16 w-16 overflow-hidden rounded-md border-2 bg-white transition-colors ${
+                      index === imageIndex
+                        ? "border-home-search-button"
+                        : "border-cream-border hover:border-ink-faint"
+                    }`}
+                    aria-label={`View image ${index + 1}`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${item.name} preview ${index + 1}`}
+                      fill
+                      sizes="64px"
+                      className="object-contain p-1.5"
+                    />
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <Button
               className="mt-2 w-full bg-home-search-button text-home-page hover:opacity-90"

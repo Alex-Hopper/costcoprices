@@ -5,7 +5,7 @@ export type SearchResultItem = {
   priceType: "fixed" | "per_kg";
   updatedAt: string;
   images: string[];
-  image: string;
+  image: string | null;
 };
 
 type RegionCode = "WC" | "EC";
@@ -34,19 +34,14 @@ export function queryFromSlug(slug: string) {
     .join(" ");
 }
 
-function fallbackImage(name: string) {
-  const lowered = name.toLowerCase();
-  if (lowered.includes("chicken")) return "/hero-images/chicken.png";
-  return "/hero-images/milk.png";
-}
+const ITEM_IMAGE_BASE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/item-images`;
 
-function toDisplayImagePath(storagePath: string, fallback: string) {
-  if (!storagePath) return fallback;
+function toDisplayImagePath(storagePath: string) {
+  if (!storagePath) return null;
   if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
     return storagePath;
   }
-  if (storagePath.startsWith("/")) return storagePath;
-  return `/${storagePath}`;
+  return `${ITEM_IMAGE_BASE_URL}/${storagePath}`;
 }
 
 export async function searchItemsBySlug(
@@ -101,12 +96,10 @@ export async function searchItemsBySlug(
   const mapped: SearchResultItem[] = regionPrices.map((priceRow: any) => {
     const base = itemByNumber.get(priceRow.item_number);
     const name = base?.canonical_name || priceRow.item_number;
-    const fallback = fallbackImage(name);
     const storagePaths = imagesByNumber.get(priceRow.item_number) ?? [];
-    const images =
-      storagePaths.length > 0
-        ? storagePaths.map((path) => toDisplayImagePath(path, fallback))
-        : [fallback];
+    const images = storagePaths
+      .map((path) => toDisplayImagePath(path))
+      .filter((path): path is string => Boolean(path));
 
     return {
       id: priceRow.item_number,
@@ -115,7 +108,7 @@ export async function searchItemsBySlug(
       priceType: priceRow.current_price_type,
       updatedAt: priceRow.last_updated_at,
       images,
-      image: images[0],
+      image: images[0] ?? null,
     };
   });
 
