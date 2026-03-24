@@ -33,6 +33,7 @@ create table items (
   is_weighted     boolean default false,
   unit_size       text,
   costco_url      text,
+  enrichment_status text not null default 'pending', -- 'pending' | 'enriched' | 'failed'
   created_at      timestamptz default now(),
   last_seen_at    timestamptz default now()
 );
@@ -62,7 +63,7 @@ create table prices (
 );
 
 create table item_region_prices (
-  item_number        text not null,
+  item_number        text not references items(item_number),
   costco_region_code text not null,  -- 'WC', 'EC', 'CB'
   current_price      decimal(10,2) not null,
   current_price_type text not null,
