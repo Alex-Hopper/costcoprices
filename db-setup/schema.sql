@@ -70,3 +70,13 @@ create table item_region_prices (
   last_updated_at    timestamptz default now(),
   primary key (item_number, costco_region_code)
 );
+
+create table scrape_backlog (
+  id                uuid primary key default gen_random_uuid(),
+  item_number       text references items(item_number),
+  cycles_in_backlog integer default 0,
+  last_attempted_at timestamptz,
+  last_failure_reason text,      -- 'no_results' | 'timeout' | 'parse_error'
+  status            text default 'pending',  -- 'pending' | 'resolved' | 'failed'
+  created_at        timestamptz default now()
+);

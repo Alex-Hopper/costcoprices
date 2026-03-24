@@ -5,6 +5,7 @@ alter table items enable row level security;
 alter table item_images enable row level security;
 alter table prices enable row level security;
 alter table item_region_prices enable row level security;
+alter table scrape_backlog enable row level security;
 
 
 -- ── Countries ────────────────────────────────────────────────────────────────
