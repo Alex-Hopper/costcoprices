@@ -36,6 +36,7 @@ export type Item = {
   is_weighted: boolean;
   unit_size: string | null;
   costco_url: string | null;
+  enrichment_status: "pending" | "enriched" | "failed";
   created_at: string;
   last_seen_at: string;
   images?: ItemImage[];

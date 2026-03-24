@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { extractReceiptInfo } from "@/lib/receipt/extract";
 import { hasExtractedItems, sanitizeExtractedReceiptInfo } from "@/lib/receipt/validate";
 import { resolveItems } from "@/lib/receipt/resolve";
@@ -9,6 +9,7 @@ import {
   getClosestWarehouseFromIp,
   insertPrices,
   resolveWarehouseId,
+  syncItemRegionPrices,
 } from "@/lib/db/prices";
 import type {
   ExtractedReceipt,
@@ -26,7 +27,7 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
     };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   let extracted;
   try {
@@ -61,7 +62,6 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
     null;
 
   const fallbackWarehouseRef = await getClosestWarehouseFromIp(supabase, userIp);
-  console.log("FALLBACK WHID", fallbackWarehouseRef, userIp);
   const finalizedReceipts = await applyReceiptFallbacks(
     supabase,
     sanitized.receipts,
@@ -83,6 +83,7 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
     receipts: resolved.receipts,
     sessionToken: crypto.randomUUID(),
   });
+  await syncItemRegionPrices(supabase, resolved.receipts);
 
   return {
     success: true,
@@ -96,7 +97,7 @@ export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissi
 }
 
 async function applyReceiptFallbacks(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   receipts: ExtractedReceipt[],
   fallbackWarehouseRef: string | null
 ): Promise<ExtractedReceipt[]> {

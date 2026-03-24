@@ -1,8 +1,10 @@
 import "server-only";
 
-import { getItemsByNumbers } from "@/lib/db/items";
-import { queueScrapeJobs } from "@/lib/scraper/queue";
-import { scrapeCostcoItem } from "@/lib/scraper/costco";
+import {
+  addItemsToScrapeBacklog,
+  getItemsByNumbers,
+  insertPlaceholderItems,
+} from "@/lib/db/items";
 import type {
   ExtractedReceipt,
   ResolveItemsResult,
@@ -24,8 +26,9 @@ export async function resolveItems(
   const initiallyMissing = uniqueItemNumbers.filter((itemNumber) => !existing.has(itemNumber));
 
   if (initiallyMissing.length) {
-    await queueScrapeJobs(initiallyMissing);
-    await Promise.allSettled(initiallyMissing.map((itemNumber) => scrapeCostcoItem(itemNumber)));
+    const missingItems = allItems.filter((item) => initiallyMissing.includes(item.itemNumber));
+    await insertPlaceholderItems(supabase, missingItems);
+    await addItemsToScrapeBacklog(supabase, initiallyMissing);
   }
 
   const refreshed = await getItemsByNumbers(supabase, uniqueItemNumbers);

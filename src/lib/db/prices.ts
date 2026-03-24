@@ -6,6 +6,11 @@ type SupabaseLike = {
   from: (table: string) => any;
 };
 
+type WarehouseRegionRow = {
+  id: string;
+  costco_region_code: string;
+};
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -45,7 +50,6 @@ export async function getClosestWarehouseFromIp(
   }
 
   const [userLatitude, userLongitude] = geo.ll;
-  console.log(userLatitude, userLongitude);
   let closestWarehouse = data[0]?.costco_warehouse_id ?? null;
   let closestDistance = Number.POSITIVE_INFINITY;
 
@@ -101,5 +105,64 @@ export async function insertPrices(
   if (!rows.length) return;
 
   const { error } = await supabase.from("prices").insert(rows);
+  if (error) throw error;
+}
+
+export async function syncItemRegionPrices(
+  supabase: SupabaseLike,
+  receipts: ResolvedReceipt[]
+): Promise<void> {
+  const warehouseIds = [...new Set(receipts.map((receipt) => receipt.warehouseId).filter(Boolean))];
+  if (!warehouseIds.length) return;
+
+  const { data: warehouses, error: warehouseError } = await supabase
+    .from("warehouses")
+    .select("id, costco_region_code")
+    .in("id", warehouseIds);
+
+  if (warehouseError) throw warehouseError;
+
+  const regionByWarehouseId = new Map(
+    ((warehouses ?? []) as WarehouseRegionRow[]).map((warehouse) => [
+      warehouse.id,
+      warehouse.costco_region_code,
+    ])
+  );
+
+  const latestByKey = new Map<
+    string,
+    {
+      item_number: string;
+      costco_region_code: string;
+      current_price: number;
+      current_price_type: string;
+      last_updated_at: string;
+    }
+  >();
+
+  for (const receipt of receipts) {
+    if (!receipt.warehouseId) continue;
+    const regionCode = regionByWarehouseId.get(receipt.warehouseId);
+    if (!regionCode) continue;
+
+    for (const item of receipt.items) {
+      const key = `${item.itemNumber}:${regionCode}`;
+      latestByKey.set(key, {
+        item_number: item.itemNumber,
+        costco_region_code: regionCode,
+        current_price: item.price,
+        current_price_type: item.priceType,
+        last_updated_at: receipt.purchaseDate ?? new Date().toISOString(),
+      });
+    }
+  }
+
+  const rows = [...latestByKey.values()];
+  if (!rows.length) return;
+
+  const { error } = await supabase
+    .from("item_region_prices")
+    .upsert(rows, { onConflict: "item_number,costco_region_code" });
+
   if (error) throw error;
 }
