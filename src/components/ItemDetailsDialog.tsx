@@ -88,16 +88,12 @@ export default function ItemDetailsDialog({
 }: ItemDetailsDialogProps) {
   const { region, regionLabel } = useRegion();
   const [imageIndex, setImageIndex] = useState(0);
-  const [reportOpen, setReportOpen] = useState(false);
-  const [newPrice, setNewPrice] = useState("");
   const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
   const [recentError, setRecentError] = useState<string | null>(null);
 
   useEffect(() => {
     setImageIndex(0);
-    setReportOpen(false);
-    setNewPrice("");
   }, [item?.id, open]);
 
   useEffect(() => {
@@ -306,60 +302,7 @@ export default function ItemDetailsDialog({
                 </ScrollArea>
               )}
             </div>
-
-            <Button
-              className="mt-2 w-full bg-home-search-button text-home-page hover:opacity-90"
-              onClick={() => setReportOpen(true)}
-            >
-              Report incorrect price
-            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-serif text-ink">Confirm your region</DialogTitle>
-            <DialogDescription className="text-sm text-ink-muted">
-              Placeholder flow for reporting a corrected price.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-4 rounded-lg border border-cream-border bg-white/70 p-4">
-            <div className="mb-1 flex items-center justify-between">
-              <p className="text-base font-medium text-ink">Western Canada</p>
-            </div>
-            <p className="text-sm text-ink-muted">If this is not your region please check the price for your region.</p>
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-1 block text-sm text-ink-muted">
-              New price ({unitLabel})
-            </label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder={item.priceType === "per_kg" ? "e.g. 12.99" : "e.g. 24.99"}
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
-              className="bg-white"
-            />
-          </div>
-
-          <DialogFooter>
-            <DialogClose className="inline-flex h-8 items-center justify-center rounded-md border border-cream-border bg-white px-3 text-sm text-ink">
-              Cancel
-            </DialogClose>
-            <Button
-              onClick={() => setReportOpen(false)}
-              disabled={!newPrice.trim()}
-              className="bg-home-search-button text-home-page hover:opacity-90"
-            >
-              Submit report
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
