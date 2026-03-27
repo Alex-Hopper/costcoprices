@@ -10,8 +10,22 @@ export type SearchResultItem = {
 
 type RegionCode = "WC" | "EC";
 
+type SupabaseQueryResult<T> = Promise<{
+  data: T[] | null;
+  error: unknown;
+}>;
+
+type SearchItemsQuery = {
+  select: (columns: string) => SearchItemsQuery;
+  or: (filters: string) => SearchItemsQuery;
+  limit: (count: number) => SearchItemsQuery;
+  then: SupabaseQueryResult<ItemRow>["then"];
+};
+
 type SupabaseLike = {
-  from: (table: string) => any;
+  from: (table: string) => {
+    select: (columns: string) => SearchItemsQuery;
+  };
 };
 
 type ItemRow = {
@@ -19,7 +33,20 @@ type ItemRow = {
   canonical_name: string | null;
 };
 
+type RegionPriceRow = {
+  item_number: string;
+  current_price: number | string;
+  current_price_type: "fixed" | "per_kg";
+  last_updated_at: string;
+};
+
+function isWildcardQuery(value: string) {
+  return value.trim() === "*";
+}
+
 export function slugifyQuery(value: string) {
+  if (isWildcardQuery(value)) return "*";
+
   return value
     .trim()
     .toLowerCase()
@@ -52,14 +79,17 @@ export async function searchItemsBySlug(
   const searchTerm = queryFromSlug(slug).trim();
   if (!searchTerm) return [];
 
-  const sanitized = searchTerm.replace(/[%_]/g, "").replace(/\s+/g, " ");
-  const ilikePattern = `%${sanitized}%`;
+  const itemsQuery = supabase.from("items").select("item_number, canonical_name");
 
-  const { data: items, error: itemsError } = await supabase
-    .from("items")
-    .select("item_number, canonical_name")
-    .or(`canonical_name.ilike.${ilikePattern},item_number.ilike.${ilikePattern}`)
-    .limit(50);
+  if (isWildcardQuery(searchTerm)) {
+    itemsQuery.limit(50);
+  } else {
+    const sanitized = searchTerm.replace(/[%_]/g, "").replace(/\s+/g, " ");
+    const ilikePattern = `%${sanitized}%`;
+    itemsQuery.or(`canonical_name.ilike.${ilikePattern},item_number.ilike.${ilikePattern}`).limit(50);
+  }
+
+  const { data: items, error: itemsError } = await itemsQuery;
 
   if (itemsError) throw itemsError;
   if (!items?.length) return [];
@@ -93,7 +123,7 @@ export async function searchItemsBySlug(
     imagesByNumber.set(row.item_number, list);
   }
 
-  const mapped: SearchResultItem[] = regionPrices.map((priceRow: any) => {
+  const mapped: SearchResultItem[] = (regionPrices as RegionPriceRow[]).map((priceRow) => {
     const base = itemByNumber.get(priceRow.item_number);
     const name = base?.canonical_name || priceRow.item_number;
     const storagePaths = imagesByNumber.get(priceRow.item_number) ?? [];
