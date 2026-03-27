@@ -9,7 +9,7 @@ export async function downloadAndUploadImage(
     if (!response.ok) return null
 
     const buffer = await response.arrayBuffer()
-    const storagePath = `items/${itemNumber}/0.jpg`
+    const storagePath = `${itemNumber}_0.jpg`
 
     const { error } = await supabase.storage
       .from('item-images')

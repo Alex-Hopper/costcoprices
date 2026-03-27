@@ -13,8 +13,6 @@ async function run() {
     console.log(`Processing item #${backlogItem.item_number}...`)
 
     const { result, failureReason } = await scrapeItem(backlogItem.item_number)
-
-    console.log("RESULT ", result)
     
     if (!result) {
       console.log(`  ✗ Not found — reason: ${failureReason}`)
