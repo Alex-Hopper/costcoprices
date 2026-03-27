@@ -53,11 +53,11 @@ create table prices (
   item_number      text references items(item_number),
   warehouse_id     uuid references warehouses(id),
   price            decimal(10,2) not null,
-  price_type       text not null,
+  price_type       text not null default 'fixed',
   currency         char(3) not null default 'CAD',
-  submission_type  text not null,
+  submission_type  text not null default 'receipt',
   is_sale          boolean default false,
-  session_token    text not null,
+  session_token    text not null default 'N/A',
   notes            text,
   submitted_at     timestamptz default now()
 );
