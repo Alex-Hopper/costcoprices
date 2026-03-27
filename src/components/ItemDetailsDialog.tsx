@@ -3,16 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -86,7 +82,7 @@ export default function ItemDetailsDialog({
   open,
   onOpenChange,
 }: ItemDetailsDialogProps) {
-  const { region, regionLabel } = useRegion();
+  const { region } = useRegion();
   const [imageIndex, setImageIndex] = useState(0);
   const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
@@ -179,7 +175,6 @@ export default function ItemDetailsDialog({
 
   const images = item.images;
   const currentImage = images[imageIndex] ?? null;
-  const unitLabel = item.priceType === "per_kg" ? "per kg" : "each";
   const shouldScrollRecentSubmissions = recentSubmissions.length > 3;
 
   return (
@@ -191,6 +186,9 @@ export default function ItemDetailsDialog({
               Updated {updatedAtLabel}
             </Badge>
             <DialogTitle className="text-2xl font-serif text-ink">{item.name}</DialogTitle>
+            <Badge variant="secondary" className="w-fit bg-cream-border text-ink-muted">
+              Item #{item.id}
+            </Badge>
             <DialogDescription className="sr-only">
               Product details and reporting actions.
             </DialogDescription>
