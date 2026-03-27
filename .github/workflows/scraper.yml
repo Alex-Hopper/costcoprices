@@ -1,0 +1,30 @@
+name: Hourly Item Scraper
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour at 0 minutes
+  workflow_dispatch:       # allows manual trigger
+
+concurrency:
+  group: scraper
+  cancel-in-progress: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Install Playwright browsers
+        run: pnpm playwright install chromium --with-deps
+      - name: Run scraper
+        run: pnpm scrape
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
