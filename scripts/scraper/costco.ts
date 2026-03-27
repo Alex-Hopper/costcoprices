@@ -2,10 +2,11 @@ import { createPage } from './browser'
 import { ScrapedItem } from './types'
 
 const SCRAPE_WAREHOUSES = [
-  { address: '605 Expo Blvd', postalCode: 'V6B1V4' , label: 'Vancouver' },
-  { address: '99 Heritage Gate SE', postalCode: 'T2H3A7', label: 'Calgary' },
-  { address: '100 Billy Bishop Wy', postalCode: 'M3K2C8', label: 'Toronto' },
-  { address: '300 Rue Bridge', postalCode: 'H3K2C3', label: 'Montreal' },
+  { address: '605 Expo Blvd', shopId: '5780', zoneId: '755',  postalCode: 'V6B1V4' , label: 'Vancouver' },
+  { address: '99 Heritage Gate SE', shopId: '11260', zoneId: '857', postalCode: 'T2H3A7', label: 'Calgary' },
+  { address: '100 Billy Bishop Wy', shopId: '751330', zoneId: '703', postalCode: 'M3K2C8', label: 'Toronto' },
+  { address: '130 Ritson Rd N', shopId: '751358', zoneId: '759', postalCode: 'L1G0A6', label: 'Toronto2' },
+  { address: '300 Rue Bridge', shopId: '971', zoneId: '759', postalCode: 'H3K2C3', label: 'Montreal' },
 ]
 
 function extractItemFromResponse(json: any, itemNumber: string): ScrapedItem | null {
@@ -52,18 +53,34 @@ export async function scrapeItem(itemNumber: string): Promise<{ result: ScrapedI
         console.log(`  → Intercepted GraphQL response for ${warehouse.label}`)
         try {
           const json = await response.json()
-          // console.dir(json, { depth: null });
           const extracted = extractItemFromResponse(json, itemNumber)
-          console.log(extracted); // TODO: this is always null.
-          if (extracted) capturedResult = extracted
+          if (extracted) {
+            capturedResult = extracted
+          } else {
+            console.log(`    ! Couldn't extract item from response.`);
+          }
         } catch {}
       }
 
       page.on('response', handleResponse)
 
       try {
+        // intercept and rewrite the GraphQL request with correct location
+        await page.route('**/graphql**', async (route) => {
+          const request = route.request()
+          const url = new URL(request.url())
+          const variables = JSON.parse(url.searchParams.get('variables') ?? '{}')
+
+          variables.postalCode = warehouse.postalCode
+          variables.shopId = warehouse.shopId
+          variables.zoneId = warehouse.zoneId
+
+          url.searchParams.set('variables', JSON.stringify(variables))
+          await route.continue({ url: url.toString() })
+        })
+
         await page.goto(
-          `https://sameday.costco.ca/store/costco-canada/s?k=${itemNumber}&postalCode=${warehouse.postalCode}`,
+          `https://sameday.costco.ca/store/costco-canada/s?k=${itemNumber}`,
           { waitUntil: 'domcontentloaded', timeout: 15000 }
         )
 
@@ -76,11 +93,11 @@ export async function scrapeItem(itemNumber: string): Promise<{ result: ScrapedI
         continue
       }
       
-      console.log("NOPE");
       page.off('response', handleResponse)
+
+      await page.unroute('**/graphql**')
       
       if (capturedResult) {
-        console.log("CLOSING");
         await page.close()
         return { result: capturedResult, failureReason: '' }
       }
