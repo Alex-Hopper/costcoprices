@@ -16,7 +16,7 @@ Each item object must have exactly these fields:
 - unit_price: the $/kg price as a number if price_type is per_kg, otherwise null
 - is_sale: true if there is an asterisk next to the item name, otherwise false
 
-Ignore tax lines, subtotals, totals, membership fees, and any non-item lines.
+Ignore tax lines, subtotals, totals, membership fees, and any non-item lines. Also, ignore lines where the item name is in the format "TPD/{number}", that is, don't create an item for these lines as these are not actual items.
 Return nothing else. No markdown, no backticks, no explanation. Just the raw JSON object.`;
 
 type ClaudeExtractedItem = {

@@ -41,6 +41,10 @@ function isValidItem(item: RawExtractedReceiptItem): boolean {
     return false;
   }
 
+  if (typeof item.rawName !== "string" || item.rawName.trim().startsWith("TPD/")) {
+    return false;
+  }
+
   // Price must be a real number in a sane Costco receipt range.
   if (!Number.isFinite(item.price) || item.price < 0 || item.price > 10000) {
     return false;
