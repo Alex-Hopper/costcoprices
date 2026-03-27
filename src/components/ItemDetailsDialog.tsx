@@ -15,8 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SearchResultItem } from "@/lib/search";
+import { createClient } from "@/lib/supabase/client";
 import { useRegion } from "@/contexts/RegionContext";
 
 type ItemDetailsDialogProps = {
@@ -25,27 +25,116 @@ type ItemDetailsDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-function priceLabel(item: SearchResultItem) {
-  return item.priceType === "per_kg"
-    ? `$${item.price.toFixed(2)} / kg`
-    : `$${item.price.toFixed(2)}`;
-}
+type WarehouseRelationRow =
+  | {
+      city: string | null;
+      costco_region_code: string | null;
+    }
+  | Array<{
+      city: string | null;
+      costco_region_code: string | null;
+    }>
+  | null;
+
+type RecentSubmissionRow = {
+  price: number | string;
+  price_type: "fixed" | "per_kg";
+  submitted_at: string;
+  warehouses: WarehouseRelationRow;
+};
+
+type RecentSubmission = {
+  price: number;
+  priceType: "fixed" | "per_kg";
+  submittedAt: string;
+  city: string | null;
+};
 
 export default function ItemDetailsDialog({
   item,
   open,
   onOpenChange,
 }: ItemDetailsDialogProps) {
-  const { region, regionLabel, setRegion } = useRegion();
+  const { region, regionLabel } = useRegion();
   const [imageIndex, setImageIndex] = useState(0);
   const [reportOpen, setReportOpen] = useState(false);
   const [newPrice, setNewPrice] = useState("");
+  const [recentSubmissions, setRecentSubmissions] = useState<RecentSubmission[]>([]);
+  const [recentLoading, setRecentLoading] = useState(false);
+  const [recentError, setRecentError] = useState<string | null>(null);
 
   useEffect(() => {
     setImageIndex(0);
     setReportOpen(false);
     setNewPrice("");
   }, [item?.id, open]);
+
+  useEffect(() => {
+    if (!open || !item) {
+      setRecentSubmissions([]);
+      setRecentLoading(false);
+      setRecentError(null);
+      return;
+    }
+
+    let canceled = false;
+    const supabase = createClient();
+
+    const loadRecentSubmissions = async () => {
+      setRecentLoading(true);
+      setRecentError(null);
+
+      try {
+        const { data, error } = await supabase
+          .from("prices")
+          .select("price, price_type, submitted_at, warehouses(city, costco_region_code)")
+          .eq("item_number", item.id)
+          .order("submitted_at", { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+
+        const submissions = ((data ?? []) as RecentSubmissionRow[])
+          .map((row) => {
+            const warehouse = Array.isArray(row.warehouses)
+              ? row.warehouses[0] ?? null
+              : row.warehouses;
+
+            if (warehouse?.costco_region_code !== region) {
+              return null;
+            }
+
+            return {
+              price: Number(row.price),
+              priceType: row.price_type,
+              submittedAt: row.submitted_at,
+              city: warehouse?.city ?? null,
+            };
+          })
+          .filter((submission): submission is RecentSubmission => submission !== null)
+          .slice(0, 5)
+
+        if (!canceled) {
+          setRecentSubmissions(submissions);
+        }
+      } catch {
+        if (!canceled) {
+          setRecentSubmissions([]);
+          setRecentError("Could not load recent submissions.");
+        }
+      } finally {
+        if (!canceled) {
+          setRecentLoading(false);
+        }
+      }
+    };
+
+    loadRecentSubmissions();
+
+    return () => {
+      canceled = true;
+    };
+  }, [item, open, region]);
 
   const updatedAtLabel = useMemo(() => {
     if (!item) return "";
@@ -61,6 +150,12 @@ export default function ItemDetailsDialog({
   const images = item.images;
   const currentImage = images[imageIndex] ?? null;
   const unitLabel = item.priceType === "per_kg" ? "per kg" : "each";
+  const formatSubmissionDate = (submittedAt: string) =>
+    new Date(submittedAt).toLocaleDateString("en-CA", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
   return (
     <>
@@ -134,6 +229,50 @@ export default function ItemDetailsDialog({
                 ))}
               </div>
             ) : null}
+
+            <div className="rounded-xl border border-cream-border bg-white/80 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-ink">Recent submissions</h3>
+                  <p className="mt-1 text-sm text-ink-muted">
+                    Up to 5 most recent member-submitted prices in {regionLabel}.
+                  </p>
+                </div>
+              </div>
+
+              {recentLoading ? (
+                <p className="mt-4 text-sm text-ink-muted">Loading recent submissions...</p>
+              ) : recentError ? (
+                <p className="mt-4 text-sm text-red-700">{recentError}</p>
+              ) : recentSubmissions.length === 0 ? (
+                <p className="mt-4 text-sm text-ink-muted">
+                  No recent submissions yet for this region.
+                </p>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {recentSubmissions.map((submission, index) => (
+                    <div
+                      key={`${item.id}-${submission.submittedAt}-${index}`}
+                      className="flex items-center justify-between gap-4 rounded-lg border border-cream-border bg-home-page/60 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-ink">
+                          {submission.city ?? "Unknown city"}
+                        </p>
+                        <p className="text-xs text-ink-muted">
+                          {formatSubmissionDate(submission.submittedAt)}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-ink">
+                        {submission.priceType === "per_kg"
+                          ? `$${submission.price.toFixed(2)} / kg`
+                          : `$${submission.price.toFixed(2)}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Button
               className="mt-2 w-full bg-home-search-button text-home-page hover:opacity-90"
