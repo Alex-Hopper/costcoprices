@@ -18,6 +18,12 @@ import type {
 } from "@/lib/receipt/types";
 
 export async function receiptSubmission(images: File[]): Promise<ReceiptSubmissionResult> {
+  const totalBytes = images.reduce((sum, file) => sum + file.size, 0)
+  const totalMB = (totalBytes / (1024 * 1024)).toFixed(2)
+  console.log(`Receipt submission: ${images.length} file(s), total size: ${totalMB}MB`)
+  console.log(images.map(f => `  ${f.name}: ${(f.size / 1024).toFixed(0)}KB`).join('\n'))
+
+  
   if (!images?.length) {
     return {
       success: false,

@@ -11,6 +11,7 @@ import SubmitSuccessCard from "@/components/submit/SubmitSuccessCard";
 import ReceiptDropzone from "@/components/submit/ReceiptDropzone";
 import ReceiptUploadControls from "@/components/submit/ReceiptUploadControls";
 import ReceiptPreviewGrid from "@/components/submit/ReceiptPreviewGrid";
+import { ensureJpeg } from "@/lib/convert-image";
 
 function makeId(file: File) {
   return `${file.name}-${file.size}-${file.lastModified}`;
@@ -38,30 +39,37 @@ export default function SubmitPage() {
     return `${receipts.length} receipts added`;
   }, [receipts.length]);
 
-  const addFiles = (files: FileList | File[]) => {
-    const selected = Array.from(files);
-    if (!selected.length) return;
+  const addFiles = async (files: FileList | File[]) => {
+    const selected = Array.from(files)
+    if (!selected.length) return
 
-    const imageFiles = selected.filter((file) => file.type.startsWith("image/"));
+    const imageFiles = selected.filter((file) =>
+      file.type.startsWith('image/') ||
+      file.name.toLowerCase().endsWith('.heic')  // HEIC often has no mime type
+    )
+
     if (imageFiles.length !== selected.length) {
-      setError("Only image files are allowed.");
+      setError('Only image files are allowed.')
     } else {
-      setError(null);
+      setError(null)
     }
 
-    setReceipts((previous) => {
-      const existingIds = new Set(previous.map((entry) => entry.id));
-      const next: UploadReceipt[] = [];
+    // convert any HEIC files to JPEG before adding
+    const convertedFiles = await Promise.all(imageFiles.map(ensureJpeg))
 
-      for (const file of imageFiles) {
-        const id = makeId(file);
-        if (existingIds.has(id)) continue;
-        next.push({ id, file, previewUrl: URL.createObjectURL(file) });
+    setReceipts((previous) => {
+      const existingIds = new Set(previous.map((entry) => entry.id))
+      const next: UploadReceipt[] = []
+
+      for (const file of convertedFiles) {
+        const id = makeId(file)
+        if (existingIds.has(id)) continue
+        next.push({ id, file, previewUrl: URL.createObjectURL(file) })
       }
 
-      return [...previous, ...next];
-    });
-  };
+      return [...previous, ...next]
+    })
+  }
 
   const removeReceipt = (id: string) => {
     setReceipts((previous) => {
@@ -84,10 +92,10 @@ export default function SubmitPage() {
   const openCameraPicker = () => cameraInputRef.current?.click();
 
   const onDrop: React.DragEventHandler<HTMLDivElement> = (event) => {
-    event.preventDefault();
-    setIsDragging(false);
-    addFiles(event.dataTransfer.files);
-  };
+    event.preventDefault()
+    setIsDragging(false)
+    void addFiles(event.dataTransfer.files)
+  }
 
   const onSubmit = async () => {
     if (!receipts.length || isSubmitting) return;
@@ -168,8 +176,8 @@ export default function SubmitPage() {
               multiple
               className="hidden"
               onChange={(event) => {
-                addFiles(event.target.files ?? []);
-                event.currentTarget.value = "";
+                void addFiles(event.target.files ?? [])
+                event.currentTarget.value = ''
               }}
             />
 
@@ -180,8 +188,8 @@ export default function SubmitPage() {
               capture="environment"
               className="hidden"
               onChange={(event) => {
-                addFiles(event.target.files ?? []);
-                event.currentTarget.value = "";
+                void addFiles(event.target.files ?? [])
+                event.currentTarget.value = ''
               }}
             />
 
