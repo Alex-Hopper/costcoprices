@@ -26,7 +26,7 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm playwright install chromium --with-deps
       - name: Run scraper
-        run: pnpm scrape
+        run: pnpm scrapeGithubAction
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
