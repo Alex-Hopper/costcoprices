@@ -11,31 +11,6 @@ import Banner from "@/components/Banner";
 import Navbar from "@/components/Navbar";
 import RegionIndicator from "@/components/RegionIndicator";
 
-// Floating product images around the hero
-// Replace PlaceholderBox with <Image src={src} .../> when you have real images
-const FLOATING_ITEMS = [
-  { id: 1, src: "/hero-images/milk.png", alt: "Milk carton", className: "absolute top-[12%] left-[6%] -rotate-12 w-[72px]" },
-  { id: 2, src: "/hero-images/chicken.png", alt: "Packaged chicken", className: "absolute top-[8%] right-[8%] rotate-12 w-[64px]" },
-  { id: 3, src: "/hero-images/milk.png", alt: "Milk carton", className: "absolute bottom-[28%] left-[4%] rotate-6 w-[56px]" },
-  { id: 4, src: "/hero-images/chicken.png", alt: "Packaged chicken", className: "absolute bottom-[30%] right-[5%] -rotate-6 w-[60px]" },
-  { id: 5, src: "/hero-images/milk.png", alt: "Milk carton", className: "absolute top-[40%] left-[13%] rotate-3 w-[48px]" },
-  { id: 6, src: "/hero-images/chicken.png", alt: "Packaged chicken", className: "absolute top-[42%] right-[12%] -rotate-3 w-[52px]" },
-];
-
-function FloatingItem({ className, src, alt }: { className: string; src: string; alt: string }) {
-  return (
-    <div className={`${className} pointer-events-none select-none`}>
-      <Image
-        src={src}
-        alt={alt}
-        width={96}
-        height={96}
-        className="w-full h-auto object-contain drop-shadow-sm"
-      />
-    </div>
-  );
-}
-
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const router = useRouter();
@@ -58,10 +33,6 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative flex flex-col items-center text-center px-6 pt-6 pb-24 overflow-hidden min-h-[520px]">
-
-        {FLOATING_ITEMS.map((item) => (
-          <FloatingItem key={item.id} className={item.className} src={item.src} alt={item.alt} />
-        ))}
 
         <h1 className="relative z-10 font-serif font-normal leading-none tracking-tight text-ink"
           style={{ fontSize: "clamp(52px, 9vw, 96px)" }}

@@ -206,8 +206,7 @@ export default function ItemDetailsDialog({
               ) : null}
             </div>
             <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-              Member-submitted price snapshot. Packaging, promotions, and regional inventory may
-              vary by warehouse.
+              Member-submitted price snapshots. Prices and inventory may vary from warehouse to warehouse.
             </p>
           </div>
 

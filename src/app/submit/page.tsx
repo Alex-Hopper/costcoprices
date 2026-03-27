@@ -141,7 +141,7 @@ export default function SubmitPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-ink-muted">
-              Upload receipt photos to help update prices. You can add one now, then add more.
+              Upload receipt photos to help update prices. You can add one or many.
             </p>
 
             <ReceiptDropzone
