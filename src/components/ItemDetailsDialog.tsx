@@ -6,6 +6,7 @@ import { ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogClose,
@@ -50,6 +51,36 @@ type RecentSubmission = {
   city: string | null;
 };
 
+const RECENT_SUBMISSION_LIMIT = 10;
+const RECENT_SUBMISSION_FETCH_LIMIT = 60;
+
+function formatSubmissionDate(submittedAt: string) {
+  return new Date(submittedAt).toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function dedupeRecentSubmissions(submissions: RecentSubmission[]) {
+  const seen = new Set<string>();
+
+  return submissions.filter((submission) => {
+    const key = [
+      submission.city ?? "",
+      formatSubmissionDate(submission.submittedAt),
+      submission.price.toFixed(2),
+    ].join("|");
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function ItemDetailsDialog({
   item,
   open,
@@ -90,7 +121,7 @@ export default function ItemDetailsDialog({
           .select("price, price_type, submitted_at, warehouses(city, costco_region_code)")
           .eq("item_number", item.id)
           .order("submitted_at", { ascending: false })
-          .limit(20);
+          .limit(RECENT_SUBMISSION_FETCH_LIMIT);
 
         if (error) throw error;
 
@@ -112,10 +143,13 @@ export default function ItemDetailsDialog({
             };
           })
           .filter((submission): submission is RecentSubmission => submission !== null)
-          .slice(0, 5)
+          .filter((submission) => Number.isFinite(submission.price));
+
+        const uniqueSubmissions = dedupeRecentSubmissions(submissions)
+          .slice(0, RECENT_SUBMISSION_LIMIT);
 
         if (!canceled) {
-          setRecentSubmissions(submissions);
+          setRecentSubmissions(uniqueSubmissions);
         }
       } catch {
         if (!canceled) {
@@ -150,12 +184,7 @@ export default function ItemDetailsDialog({
   const images = item.images;
   const currentImage = images[imageIndex] ?? null;
   const unitLabel = item.priceType === "per_kg" ? "per kg" : "each";
-  const formatSubmissionDate = (submittedAt: string) =>
-    new Date(submittedAt).toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  const shouldScrollRecentSubmissions = recentSubmissions.length > 3;
 
   return (
     <>
@@ -234,9 +263,9 @@ export default function ItemDetailsDialog({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-ink">Recent submissions</h3>
-                  <p className="mt-1 text-sm text-ink-muted">
-                    Up to 5 most recent member-submitted prices in {regionLabel}.
-                  </p>
+                  {/* <p className="mt-1 text-sm text-ink-muted">
+                    Up to {RECENT_SUBMISSION_LIMIT} most recent member-submitted prices in {regionLabel}.
+                  </p> */}
                 </div>
               </div>
 
@@ -249,28 +278,32 @@ export default function ItemDetailsDialog({
                   No recent submissions yet for this region.
                 </p>
               ) : (
-                <div className="mt-4 space-y-2">
-                  {recentSubmissions.map((submission, index) => (
-                    <div
-                      key={`${item.id}-${submission.submittedAt}-${index}`}
-                      className="flex items-center justify-between gap-4 rounded-lg border border-cream-border bg-home-page/60 px-3 py-2"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-ink">
-                          {submission.city ?? "Unknown city"}
-                        </p>
-                        <p className="text-xs text-ink-muted">
-                          {formatSubmissionDate(submission.submittedAt)}
+                <ScrollArea
+                  className={shouldScrollRecentSubmissions ? "mt-4 h-56 overflow-hidden" : "mt-4"}
+                >
+                  <div className="space-y-2 pr-3">
+                    {recentSubmissions.map((submission, index) => (
+                      <div
+                        key={`${item.id}-${submission.submittedAt}-${index}`}
+                        className="flex items-center justify-between gap-4 rounded-lg border border-cream-border bg-home-page/60 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-ink">
+                            {submission.city ?? "Unknown city"}
+                          </p>
+                          <p className="text-xs text-ink-muted">
+                            {formatSubmissionDate(submission.submittedAt)}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold text-ink">
+                          {submission.priceType === "per_kg"
+                            ? `$${submission.price.toFixed(2)} / kg`
+                            : `$${submission.price.toFixed(2)}`}
                         </p>
                       </div>
-                      <p className="text-sm font-semibold text-ink">
-                        {submission.priceType === "per_kg"
-                          ? `$${submission.price.toFixed(2)} / kg`
-                          : `$${submission.price.toFixed(2)}`}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               )}
             </div>
 
