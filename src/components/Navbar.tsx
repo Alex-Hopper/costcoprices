@@ -13,7 +13,7 @@ export default function HomeNav() {
         Costco<em>Price</em>
       </Link>
       <div className="flex items-center gap-3">
-        <Link href="/browse">
+        <Link href="/search/*">
           <Button
             variant="outline"
             size="lg"

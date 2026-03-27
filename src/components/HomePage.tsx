@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -38,7 +38,6 @@ function FloatingItem({ className, src, alt }: { className: string; src: string;
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const handleSearch = () => {
@@ -54,7 +53,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-home-page">
 
-      <Banner onSubmitReceipt={() => inputRef.current?.focus()} />
+      <Banner />
       <Navbar />
 
       {/* Hero */}
@@ -81,7 +80,6 @@ export default function HomePage() {
           <div className="flex min-w-0 flex-1 items-center rounded-lg bg-home-search px-4 md:px-5">
             <Search size={16} className="shrink-0 text-home-page/95" />
             <Input
-              ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
