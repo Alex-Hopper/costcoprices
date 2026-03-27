@@ -1,3 +1,5 @@
+import { SupabaseClient } from "@supabase/supabase-js";
+
 export type SearchResultItem = {
   id: string;
   name: string;
@@ -20,12 +22,6 @@ type SearchItemsQuery = {
   or: (filters: string) => SearchItemsQuery;
   limit: (count: number) => SearchItemsQuery;
   then: SupabaseQueryResult<ItemRow>["then"];
-};
-
-type SupabaseLike = {
-  from: (table: string) => {
-    select: (columns: string) => SearchItemsQuery;
-  };
 };
 
 type ItemRow = {
@@ -72,7 +68,7 @@ function toDisplayImagePath(storagePath: string) {
 }
 
 export async function searchItemsBySlug(
-  supabase: SupabaseLike,
+  supabase: SupabaseClient,
   slug: string,
   region: RegionCode
 ) {
