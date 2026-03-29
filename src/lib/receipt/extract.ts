@@ -9,11 +9,11 @@ Each object within the receipts array should correspond with exactly one of the 
 The warehouse_id field should be a string, and consists of numbers.
 The date should be in a string in the format "YYYY/MM/DD".
 Each item object must have exactly these fields:
-- item_number: the  item number (string)
+- item_number: the item number (string)
 - name: the item name exactly as printed (string)
 - price: the final price paid as a number, no dollar sign (number)
-- price_type: "per_kg" if there is a line above showing a $/kg unit price, otherwise "fixed"
-- unit_price: the $/kg price as a number if price_type is per_kg, otherwise null
+- price_type: this will always be "fixed"
+- unit_price: always null
 - is_sale: true if there is an asterisk next to the item name, otherwise false
 
 Ignore tax lines, subtotals, totals, membership fees, and any non-item lines. Also, ignore lines where the item name is in the format "TPD/{number}", that is, don't create an item for these lines as these are not actual items.
