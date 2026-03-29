@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const DAYS_UNTIL_WE_IGNORE = 14;
+const DAYS_UNTIL_WE_IGNORE = 14 * 24; // 14 Days * 24 hours in a day.
 
 export async function getPendingBacklogItems(): Promise<BacklogItem[]> {
   const { data, error } = await supabase
@@ -14,10 +14,6 @@ export async function getPendingBacklogItems(): Promise<BacklogItem[]> {
     .select('id, item_number, cycles_in_backlog, last_failure_reason')
     .eq('status', 'pending')
     .lte('cycles_in_backlog', DAYS_UNTIL_WE_IGNORE)
-    // filter out already enriched just in case
-    // .not('item_number', 'in', 
-    //   supabase.from('items').select('item_number').eq('enrichment_status', 'enriched')
-    // )
 
   if (error) throw error
   return data ?? []
