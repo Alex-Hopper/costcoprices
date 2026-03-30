@@ -96,7 +96,6 @@ export default function SearchResultsPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder='Try "chicken breast"'
               className="h-9 flex-1 border-0 bg-transparent px-2 text-sm text-ink placeholder:text-ink-faint shadow-none focus-visible:ring-0"
             />
           </div>
@@ -116,7 +115,7 @@ export default function SearchResultsPage() {
         <RegionIndicator />
 
         {loading ? (
-          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white p-4 md:p-5">
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {loadingSkeletons.map((skeleton) => (
                 <div key={skeleton} className="p-2">
@@ -132,11 +131,11 @@ export default function SearchResultsPage() {
           <p className="mt-4 text-red-700">
             Something wen't wrong, please try again. ({loadError})</p>
         ) : results.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white p-4 md:p-5">
             <p className="text-ink-muted text-center">No results found. Try another search.</p>
           </div>
         ) : (
-          <div className="mt-4 rounded-2xl border border-cream-border bg-white/80 p-4 md:p-5">
+          <div className="mt-4 rounded-2xl border border-cream-border bg-white p-4 md:p-5">
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {results.map((item) => (
                 <ItemCard
