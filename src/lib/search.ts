@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export type SearchResultItem = {
   id: string;
   name: string;
+  unitString: string | null;
   price: number;
   priceType: "fixed" | "per_kg";
   updatedAt: string;
@@ -27,6 +28,7 @@ type SearchItemsQuery = {
 type ItemRow = {
   item_number: string;
   canonical_name: string | null;
+  unit_string: string | null;
 };
 
 type RegionPriceRow = {
@@ -75,7 +77,7 @@ export async function searchItemsBySlug(
   const searchTerm = queryFromSlug(slug).trim();
   if (!searchTerm) return [];
 
-  const itemsQuery = supabase.from("items").select("item_number, canonical_name");
+  const itemsQuery = supabase.from("items").select("item_number, canonical_name, unit_string");
 
   if (isWildcardQuery(searchTerm)) {
     itemsQuery.limit(50);
@@ -130,6 +132,7 @@ export async function searchItemsBySlug(
     return {
       id: priceRow.item_number,
       name,
+      unitString: base?.unit_string ?? null,
       price: Number(priceRow.current_price),
       priceType: priceRow.current_price_type,
       updatedAt: priceRow.last_updated_at,

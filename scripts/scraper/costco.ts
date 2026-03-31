@@ -26,12 +26,17 @@ function extractItemFromResponse(json: any, itemNumber: string): ScrapedItem | n
       const name = item?.name  // directly on item, not in viewSection
       if (!name) return null
 
+      let unitSize = item?.price?.viewSection?.itemCard?.pricingUnitString
+      if (!unitSize || typeof unitSize == "string" && unitSize.includes('$')) {
+        unitSize = null;
+      }
+
       const templateUrl = item?.viewSection?.itemImage?.templateUrl ?? null
       const imageUrl = templateUrl
         ? templateUrl.replace('{width=}', '394').replace('{height=}', '394')
         : null
 
-      return { item_number: itemNumber, canonical_name: name, image_url: imageUrl }
+      return { item_number: itemNumber, canonical_name: name, unit_string: unitSize, image_url: imageUrl }
     }
 
     return null

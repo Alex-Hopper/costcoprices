@@ -1,4 +1,4 @@
-import { getPendingBacklogItems, markResolved, markFailed, updateItemName, insertItemImages } from './db'
+import { getPendingBacklogItems, markResolved, markFailed, updateItemName, insertItemImages, updateUnitString } from './db'
 import { scrapeItem } from './costco'
 import { downloadAndUploadImage } from './images'
 import { closeBrowser } from './browser'
@@ -24,6 +24,10 @@ async function run() {
 
     // update canonical name
     await updateItemName(backlogItem.item_number, result.canonical_name)
+    
+    if (result.unit_string) {
+      await updateUnitString(backlogItem.item_number, result.unit_string)
+    } 
 
     // download and upload image if available
     if (result.image_url) {

@@ -32,6 +32,7 @@ create table items (
   category        text,
   is_weighted     boolean default false,
   unit_size       text,
+  unit_string     text,
   costco_url      text,
   enrichment_status text not null default 'pending', -- 'pending' | 'enriched' | 'failed'
   created_at      timestamptz default now(),

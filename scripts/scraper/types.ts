@@ -8,5 +8,6 @@ export type BacklogItem = {
 export type ScrapedItem = {
   item_number: string
   canonical_name: string
+  unit_string: string | null
   image_url: string | null
 }

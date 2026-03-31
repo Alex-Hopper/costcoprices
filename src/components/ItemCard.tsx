@@ -34,6 +34,7 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
       </div>
       <p className="mt-3 text-xl font-semibold text-ink">{item.price.toFixed(2)} {item.priceType === "per_kg" ? <span className="text-ink-muted">/ kg</span> : <></>}</p>
       <h2 className="mt-1 text-sm font-normal text-ink-muted">{item.name}</h2>
+      {item.unitString && <p className="mt-1 text-xs text-ink-muted/90">{item.unitString}</p>}
     </button>
   );
 }

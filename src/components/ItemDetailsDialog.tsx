@@ -203,6 +203,7 @@ export default function ItemDetailsDialog({
                 </Badge>
               ) : null}
             </div>
+            {item.unitString && <p className="mt-1 text-xs text-ink-muted/90">{item.unitString}</p>}
             <p className="mt-3 text-sm leading-relaxed text-ink-muted">
               Member-submitted price snapshots. Prices and inventory may vary from warehouse to warehouse.
             </p>

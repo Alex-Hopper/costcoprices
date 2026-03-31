@@ -75,4 +75,11 @@ export async function updateItemName(itemNumber: string, canonicalName: string) 
     .eq('item_number', itemNumber)
 }
 
+export async function updateUnitString(itemNumber: string, unitString: string) {
+  await supabase
+    .from('items')
+    .update({unit_string: unitString})
+    .eq('item_number', itemNumber)
+}
+
 export { supabase }
